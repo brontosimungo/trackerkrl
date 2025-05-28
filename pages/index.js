@@ -24,8 +24,11 @@ export default function Home() {
   return (
     <div>
       <h1 style={{ fontSize: '1rem', textAlign: 'center' }}>
-    Tracker KA Rangkasbitung - Tanah Abang<br />Sesuai GAPEKA 2025<br />@aufalmarom
-  </h1>
+    Tracker KA Rangkasbitung - Tanah Abang<br />GAPEKA2025
+      </h1>
+      <div style={{ fontSize: '0.75rem', textAlign: 'center', marginTop: '-9px' }}>
+      (Data simulasi realtime berbasis jadwal resmi , jika ada keterlambatan karena bukan berdasarkan GPS kereta)
+      </div>
       {positions ? (
         <Map positions={positions} />
       ) : (
