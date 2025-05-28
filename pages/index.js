@@ -23,8 +23,8 @@ export default function Home() {
 
   return (
     <div>
-      <h1 style={{ fontSize: '1.2rem', textAlign: 'center' }}>
-    Tracker KA Rangkasbitung - Tanah Abang<br />By aufalmarom
+      <h1 style={{ fontSize: '1rem', textAlign: 'center' }}>
+    Tracker KA Rangkasbitung - Tanah Abang<br />Sesuai GAPEKA 2025<br />@aufalmarom
   </h1>
       {positions ? (
         <Map positions={positions} />
