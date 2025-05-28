@@ -1,0 +1,71 @@
+/* Station Marker Styles */
+.custom-station-icon {
+  text-align: center;
+}
+
+.station-marker {
+  background: #0056b3;
+  color: white;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  transform: translateY(-50%);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+}
+
+.station-marker .station-code {
+  font-weight: bold;
+  font-size: 11px;
+}
+
+.station-marker .station-name {
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
+}
+
+/* Active Station */
+.station-marker.active-station {
+  background: #ff5722;
+  transform: translateY(-50%) scale(1.1);
+  z-index: 1000;
+}
+
+/* Next Station */
+.station-marker.next-station {
+  background: #4caf50;
+}
+
+/* Station Popup */
+.station-popup {
+  min-width: 180px;
+}
+
+.station-popup h4 {
+  margin: 0 0 5px 0;
+  color: #0056b3;
+}
+
+.station-popup p {
+  margin: 3px 0;
+  font-size: 13px;
+}
+
+.station-popup .station-note {
+  font-style: italic;
+  color: #666;
+}
+.station-name {
+  font-size: 30px;
+  font-weight: bold;
+  color: rgb(240, 13, 13);
+}
+.station-label {
+  background: white;
+  border: 1px solid black;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
