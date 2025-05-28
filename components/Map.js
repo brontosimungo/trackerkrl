@@ -109,24 +109,34 @@ export default function Map({ positions }) {
               html: `
                 <div style="display: flex; align-items: center; gap: 6px;">
                   <div style="
+                    background: rgba(255, 255, 255, 0.85);
+                    flex-direction: column;
+                    border: 1px solid rgba(0,0,0,0.1);
+                    padding: 1px 3px;
+                    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+                    font-family: 'Segoe UI', sans-serif;
                     width: 10px;
                     height: 10px;
-                    background: black;
-                    border-radius: 2px;
+                    background: #2c3e50;
+                    border-radius: 8px;
+                    line-height: 1.2;
                   "></div>
                   <div style="
-                    transform: rotate(-60deg);
+                    transform: rotate(30deg);
                     transform-origin: left center;
                     font-size: 13px;
-                    color: rgba(0,0,0,0.75);
-                    font-weight: 600;
+                    color: #333;
+                    font-weight: 800;
                     white-space: nowrap;
                   ">
-                    ${label}
+                    <div>${kaId}</div>
+                    <div style="font-weight: 600; font-size: 12px; opacity: 1;">
+                      ${pos.currentStop?.stasiun || '-'} → ${pos.nextStop?.stasiun || '-'}
+                      ${pos.departureTime ? `<br/>Berangkat ${pos.departureTime}` : ''}
                   </div>
                 </div>
               `,
-              iconAnchor: [5, 5]
+              iconAnchor: [10, 10]
             })}
             zIndexOffset={3000}
           />
