@@ -33,6 +33,7 @@ export default function Home() {
   return (
     <>
       <Head>
+        <meta name="google-adsense-account" content="ca-pub-5819039672384090">
         <title>Live Tracker KA Commuter Line Rangkasbitung - Tanah Abang</title>
         <meta name="description" content="Pantau pergerakan real-time (simulasi) Kereta Api Commuter Line Rangkasbitung - Tanah Abang berdasarkan jadwal GAPEKA terbaru." />
         <link rel="icon" href="/favicon.ico" /> {/* Tambahkan favicon jika ada */}
