@@ -1,7 +1,8 @@
-import { MapContainer, TileLayer, Marker, Polyline } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline, Tooltip } from 'react-leaflet';
 import { useEffect, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import relasiKA from '../data/relasiKA';
 
 // Fungsi hitung jarak Euclidean
 function getDistance([lat1, lng1], [lat2, lng2]) {
@@ -29,116 +30,167 @@ function findNearestPoint(pos, polylines) {
 export default function Map({ positions }) {
   const [jalur, setJalur] = useState(null);
   const [stasiun, setStasiun] = useState([]);
+  const [isLoadingStations, setIsLoadingStations] = useState(true);
+  const [isLoadingJalur, setIsLoadingJalur] = useState(true); // Tambahkan untuk jalur
 
   useEffect(() => {
+    setIsLoadingJalur(true); // Set loading true
     fetch('/data/jalurRel.json')
-      .then(res => res.json())
-      .then(data => {
+      .then(res => {
+        if (!res.ok) { // Cek jika response tidak OK (misal 404)
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then(dataJalur => { // Menggunakan nama parameter yang jelas: dataJalur
+        console.log("Data Jalur Dimuat:", dataJalur);
         const filtered = {
-          ...data,
-          features: data.features.filter(f => f.geometry.type === 'LineString')
+          ...dataJalur, // Menggunakan dataJalur
+          features: dataJalur.features.filter(f => f.geometry.type === 'LineString')
         };
         setJalur(filtered);
+        setIsLoadingJalur(false); // Set loading false
+      })
+      .catch(error => {
+        console.error("Gagal memuat data jalurRel:", error);
+        setIsLoadingJalur(false); // Set loading false juga jika error
       });
   }, []);
 
   useEffect(() => {
+    setIsLoadingStations(true); // Set loading true
     fetch('/data/stasiun.json')
-      .then(res => res.json())
-      .then(setStasiun);
+      .then(res => {
+        if (!res.ok) { // Cek jika response tidak OK
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then(dataStasiun => { // Menggunakan nama parameter yang jelas: dataStasiun
+        console.log("Data Stasiun Dimuat untuk state:", dataStasiun);
+        setStasiun(dataStasiun); // Menggunakan dataStasiun
+        setIsLoadingStations(false); // Set loading false
+      })
+      .catch(error => {
+        console.error("Gagal memuat data stasiun:", error);
+        setIsLoadingStations(false); // Set loading false juga jika error
+      });
   }, []);
 
+  console.log("State stasiun sebelum render:", stasiun);
+  console.log("State jalur sebelum render:", jalur);
+
+  // Custom icon for stations (hanya dot kecil)
+  const stationDotIcon = L.divIcon({
+    className: 'station-dot-icon',
+    html: `<span class="station-marker-dot-only"></span>`,
+    iconSize: [12, 12],
+    iconAnchor: [6, 6]
+  });
+
+  // Custom icon for trains
+  const createTrainIcon = (kaId, currentStation, nextStation, departureTime, relasiDetail) => {
+    return L.divIcon({
+      className: 'custom-train-div-icon',
+      html: `
+        <div class="train-marker-container">
+          <div class="train-icon-base">
+            <div class="train-icon-pulse"></div>
+          </div>
+          <div class="train-info-card">
+            <div class="train-info-id">KA ${kaId}</div>
+            <div class="train-info-route">
+              <span class="station-from">${currentStation || 'Mulai'}</span>
+              <span class="route-arrow">→</span>
+              <span class="station-to">${nextStation || 'Selesai'}</span>
+            </div>
+            ${departureTime ? `<div class="train-info-time">Berangkat: ${departureTime}</div>` : ''}
+            ${relasiDetail ? `<div class="train-info-relasi">${relasiDetail}</div>` : ''}
+          </div>
+        </div>
+      `,
+      iconAnchor: [12, 12]
+    });
+  };
+
+  // Jika salah satu data penting masih loading, bisa tampilkan pesan loading global untuk map
+  if (isLoadingStations || isLoadingJalur) {
+    console.log("Map.js: Masih memuat data penting (stasiun atau jalur)...");
+    // Anda bisa return komponen loading di sini agar tidak render MapContainer prematur
+    // return <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%'}}><p>Memuat peta dan data...</p></div>;
+  }
+
   return (
-    <MapContainer center={[-6.34, 106.5]} zoom={11} style={{ height: '90vh', width: '100%' }}>
+    <MapContainer center={[-6.30, 106.55]} zoom={10} style={{ height: 'calc(100vh - 100px)', width: '100%' }} scrollWheelZoom={true}>
       <TileLayer
-        attribution='&copy; OpenStreetMap contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors — Tren Realtime oleh GAPEKA Explorer'
+        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png"
       />
 
-      {/* Stasiun */}
-      {stasiun.map((s, i) => (
-        <Marker
-          key={`s-${i}`}
-          position={[s.koordinat[1], s.koordinat[0]]}
-          icon={L.divIcon({
-            className: 'station-label',
-            html: `<div style="
-              font-size: 18px;
-              font-weight: bold;
-              background: white;
-              color: black;
-              padding: 4px 6px;
-              border: 1px solid black;
-              border-radius: 4px;
-              box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
-            ">${s.nama}</div>`,
-            iconAnchor: [0, 0]
-          })}
-          zIndexOffset={1000}
-        />
-      ))}
-
-      {/* Jalur */}
-      {jalur && jalur.features.map((feature, i) => (
+      {/* Garis jalur rel */}
+      {!isLoadingJalur && jalur && jalur.features.map((feature, i) => ( // Cek isLoadingJalur juga
         <Polyline
-          key={i}
+          key={`jalur-${i}`}
           positions={feature.geometry.coordinates.map(([lng, lat]) => [lat, lng])}
-          color="green"
+          color="#2c3e50"
+          weight={3}
+          opacity={0.6}
         />
       ))}
 
-      {/* Kereta - kotak kecil hitam + label miring */}
-      {positions && jalur && Object.entries(positions).map(([kaId, pos]) => {
+      {/* Marker stasiun */}
+      {!isLoadingStations && stasiun && stasiun.length > 0 && stasiun.map((s, i) => {
+        // console.log(`Rendering stasiun: ${s.nama}`, s.koordinat);
+        if (!s.koordinat || s.koordinat.length !== 2 || typeof s.koordinat[0] !== 'number' || typeof s.koordinat[1] !== 'number') {
+          console.warn("Koordinat stasiun tidak valid atau bukan angka:", s);
+          return null;
+        }
+        return (
+          <Marker
+            key={`s-${i}`}
+            position={[s.koordinat[1], s.koordinat[0]]}
+            icon={stationDotIcon}
+            zIndexOffset={100}
+          >
+            <Tooltip
+              direction="top"
+              offset={[0, -7]}
+              opacity={1}
+              permanent
+              className="station-tooltip-label"
+            >
+              {s.nama}
+            </Tooltip>
+          </Marker>
+        );
+      })}
+
+
+      {/* Marker kereta */}
+      {!isLoadingJalur && positions && jalur && Object.entries(positions).map(([kaId, pos]) => { // Cek isLoadingJalur
         const koord = pos.koordinat;
         if (!Array.isArray(koord) || koord.length !== 2) return null;
+
+        // Pastikan jalur.features ada sebelum findNearestPoint
+        if (!jalur || !jalur.features || jalur.features.length === 0) return null;
 
         const nearest = findNearestPoint(koord, jalur.features);
         if (!nearest) return null;
 
-        let label = `${kaId} ${pos.currentStop?.stasiun || '-'} → ${pos.nextStop?.stasiun || '-'}`;
-        if (!pos.currentStop && pos.nextStop && pos.departureTime) {
-          label += ` (Berangkat ${pos.departureTime})`;
-        }
+        const relasiDetail = relasiKA[kaId]?.[0] || '';
 
         return (
           <Marker
             key={kaId}
             position={nearest}
-            icon={L.divIcon({
-              className: 'train-label',
-              html: `
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <div style="
-                    background: rgba(255, 255, 255, 0.85);
-                    flex-direction: column;
-                    border: 1px solid rgba(0,0,0,0.1);
-                    padding: 1px 3px;
-                    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-                    font-family: 'Segoe UI', sans-serif;
-                    width: 10px;
-                    height: 10px;
-                    background: #2c3e50;
-                    border-radius: 8px;
-                    line-height: 1.2;
-                  "></div>
-                  <div style="
-                    transform: rotate(30deg);
-                    transform-origin: left center;
-                    font-size: 13px;
-                    color: #333;
-                    font-weight: 800;
-                    white-space: nowrap;
-                  ">
-                    <div>${kaId}</div>
-                    <div style="font-weight: 600; font-size: 12px; opacity: 1;">
-                      ${pos.currentStop?.stasiun || '-'} → ${pos.nextStop?.stasiun || '-'}
-                      ${pos.departureTime ? `<br/>Berangkat ${pos.departureTime}` : ''}
-                  </div>
-                </div>
-              `,
-              iconAnchor: [10, 10]
-            })}
-            zIndexOffset={3000}
+            icon={createTrainIcon(
+              kaId,
+              pos.currentStop?.stasiun,
+              pos.nextStop?.stasiun,
+              pos.departureTime,
+              relasiDetail
+            )}
+            zIndexOffset={1000}
           />
         );
       })}
