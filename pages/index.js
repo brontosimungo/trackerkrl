@@ -1,5 +1,6 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
+import Head from 'next/head';
 import jadwalKA from '../data/jadwal';
 import { interpolateAllPositions } from '../utils/interpolateTrainPosition';
 
@@ -11,6 +12,14 @@ export default function Home() {
   useEffect(() => {
     const updatePositions = () => {
       const now = new Date();
+      // Penyesuaian waktu simulasi: +7 jam untuk UTC+7 (WIB) dari waktu lokal browser
+      // Jika server sudah UTC, maka now.getHours() sudah benar jika server di set UTC.
+      // Jika server di set WIB, maka now.getHours() juga sudah benar.
+      // Untuk konsistensi, kita gunakan UTC hours dan minutes lalu adjust ke GMT+7
+      // const utcHours = now.getUTCHours();
+      // const localMinutes = ((utcHours + 7) % 24) * 60 + now.getUTCMinutes() + now.getUTCSeconds() / 60;
+      
+      // Menggunakan waktu lokal client (browser)
       const localMinutes = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
       const pos = interpolateAllPositions(localMinutes, jadwalKA);
       setPositions(pos);
@@ -22,18 +31,39 @@ export default function Home() {
   }, []);
 
   return (
-    <div>
-      <h1 style={{ fontSize: '1rem', textAlign: 'center' }}>
-    Tracker KA Rangkasbitung - Tanah Abang<br />GAPEKA2025
-      </h1>
-      <div style={{ fontSize: '0.75rem', textAlign: 'center', marginTop: '-9px' }}>
-      (Data simulasi realtime berbasis jadwal resmi , jika ada keterlambatan karena bukan berdasarkan GPS kereta)
-      </div>
-      {positions ? (
-        <Map positions={positions} />
-      ) : (
-        <p>Memuat posisi kereta...</p>
-      )}
-    </div>
+    <>
+      <Head>
+        <title>Live Tracker KA Commuter Line Rangkasbitung - Tanah Abang</title>
+        <meta name="description" content="Pantau pergerakan real-time (simulasi) Kereta Api Commuter Line Rangkasbitung - Tanah Abang berdasarkan jadwal GAPEKA terbaru." />
+        <link rel="icon" href="/favicon.ico" /> {/* Tambahkan favicon jika ada */}
+      </Head>
+      <main className="app-container">
+        <header className="app-header">
+          <h1>Pantau Perjalanan KA Commuter Line</h1>
+          <h2>Rangkasbitung ⇌ Tanah Abang</h2>
+          <p className="gapeka-info">GAPEKA 2025</p>
+        </header>
+        
+        <div className="map-wrapper">
+          {positions ? (
+            <Map positions={positions} />
+          ) : (
+            <div className="loading-state">
+              <div className="spinner"></div>
+              <p>Menghitung perkiraan posisi kereta...</p>
+            </div>
+          )}
+        </div>
+        <footer className="app-footer">
+          <p>
+            <strong>Disclaimer:</strong> Data ini adalah simulasi real-time berbasis jadwal resmi GAPEKA. 
+            Keterlambatan aktual akibat gangguan operasional tidak tercermin karena ini bukan pelacakan GPS langsung.
+          </p>
+          <p>
+            Dikembangkan dengan ❤️ oleh AUFAL MAROM.
+          </p>
+        </footer>
+      </main>
+    </>
   );
 }
