@@ -5,14 +5,14 @@ body {
   margin: 0;
   font-family: 'Poppins', -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
-  background-color: #f4f7f9; /* Soft off-white background */
+  background-color: #f4f7f9;
   color: #333;
   line-height: 1.6;
-  overflow-x: hidden; /* Prevent horizontal scroll */
+  overflow-x: hidden;
 }
 
 a {
-  color: #0070f3; /* Consistent link color */
+  color: #0070f3;
   text-decoration: none;
 }
 
@@ -33,9 +33,9 @@ a:hover {
 }
 
 .app-header {
-  background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%); /* Gradient header */
+  background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
   color: white;
-  padding: 20px 20px 15px; /* Reduced bottom padding */
+  padding: 20px 20px 15px;
   text-align: center;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
@@ -64,13 +64,12 @@ a:hover {
   margin-top: 5px;
 }
 
-
 .map-wrapper {
   flex-grow: 1;
-  display: flex; /* For loading state centering */
-  justify-content: center; /* For loading state centering */
-  align-items: center; /* For loading state centering */
-  background-color: #e9ecef; /* Slightly darker for map contrast */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #e9ecef;
 }
 
 .loading-state {
@@ -83,7 +82,7 @@ a:hover {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border-left-color: #0070f3; /* Blue accent for spinner */
+  border-left-color: #0070f3;
   animation: spin 1s ease infinite;
   margin: 0 auto 10px;
 }
@@ -98,8 +97,8 @@ a:hover {
 }
 
 .app-footer {
-  background-color: #2c3e50; /* Dark footer */
-  color: #bdc3c7; /* Light gray text */
+  background-color: #2c3e50;
+  color: #bdc3c7;
   padding: 15px;
   text-align: center;
   font-size: 0.8rem;
@@ -108,14 +107,13 @@ a:hover {
   margin: 5px 0;
 }
 .app-footer strong {
-  color: #ecf0f1; /* Slightly brighter for emphasis */
+  color: #ecf0f1;
 }
-
 
 /* Leaflet Overrides and Customizations */
 .leaflet-container {
-  font-family: 'Poppins', sans-serif; /* Ensure map uses the same font */
-  border-radius: 0; /* Remove if map-wrapper has radius */
+  font-family: 'Poppins', sans-serif;
+  border-radius: 0;
 }
 
 .leaflet-control-attribution {
@@ -131,51 +129,43 @@ a:hover {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
-  /* Penting: pastikan divIcon tidak memiliki padding/border default yang mengganggu */
   padding: 0 !important;
   margin: 0 !important;
 }
 
 .station-marker-dot-only {
-  display: block; /* Agar iconSize bekerja dengan baik */
-  width: 10px;   /* Sesuaikan dengan iconSize[0] di JS pada stationDotIcon */
-  height: 10px;  /* Sesuaikan dengan iconSize[1] di JS pada stationDotIcon */
-  background-color: #7f8c8d; /* Muted gray */
+  display: block;
+  width: 10px;
+  height: 10px;
+  background-color: #7f8c8d;
   border-radius: 50%;
-  border: 2px solid #fff; /* White border for better visibility */
-  box-shadow: 0 0 6px rgba(0,0,0,0.4); /* Softer shadow */
+  border: 2px solid #fff;
+  box-shadow: 0 0 6px rgba(0,0,0,0.4);
 }
 
-/* Styling untuk Tooltip sebagai Label Stasiun */
-.station-tooltip-label.leaflet-tooltip { /* Lebih spesifik untuk override */
+/* Tooltip Label */
+.station-tooltip-label.leaflet-tooltip {
   background-color: rgba(255, 255, 255, 0.9) !important;
   border: 1px solid rgba(0,0,0,0.15) !important;
   border-radius: 5px !important;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
-  color: #2c3e50 !important; /* Dark blue-gray text */
+  color: #2c3e50 !important;
   padding: 4px 8px !important;
   font-size: 11px !important;
   font-weight: 500 !important;
   white-space: nowrap !important;
-  /* Menghilangkan panah default tooltip jika diinginkan */
-  /* &::before {
-    content: none !important;
-  } */
-  /* Agar tooltip permanent tidak punya class .leaflet-tooltip-top, dll. yang menyebabkan panah */
-  /* Ini mungkin perlu jika panah tetap muncul */
 }
 
 .leaflet-tooltip-top::before,
 .leaflet-tooltip-bottom::before,
 .leaflet-tooltip-left::before,
 .leaflet-tooltip-right::before {
-    content: none !important; /* Sembunyikan panah default untuk tooltip permanen */
+  content: none !important;
 }
-
 
 /* Custom Train Marker */
 .custom-train-div-icon {
-  background: transparent !important; /* Important to override Leaflet defaults */
+  background: transparent !important;
   border: none !important;
   box-shadow: none !important;
 }
@@ -184,20 +174,20 @@ a:hover {
   display: flex;
   flex-direction: column;
   align-items: center;
-  position: relative; /* For absolute positioning of info card */
+  position: relative;
 }
 
 .train-icon-base {
-  width: 24px; /* Size of the base icon */
+  width: 24px;
   height: 24px;
-  background-color: #3498db; /* Modern blue */
+  background-color: #3498db;
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
   border: 2px solid white;
-  position: relative; /* For pulse */
+  position: relative;
   z-index: 2;
 }
 
@@ -227,26 +217,26 @@ a:hover {
 
 .train-info-card {
   position: absolute;
-  bottom: 30px; /* Position above the marker */
+  bottom: 30px;
   left: 50%;
   transform: translateX(-50%);
   min-width: 180px;
-  background-color: rgba(255, 255, 255, 0.92); /* Sedikit lebih opaque */
+  background-color: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px); /* Safari */
+  -webkit-backdrop-filter: blur(6px);
   border: 1px solid rgba(0,0,0,0.1);
   border-radius: 8px;
-  padding: 10px 14px; /* Padding lebih besar */
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15); /* Shadow lebih jelas */
+  padding: 10px 14px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
   font-size: 12px;
-  color: #2c3e50; /* Dark blue text */
+  color: #2c3e50;
   text-align: left;
   white-space: nowrap;
-  z-index: 1; /* Below the marker dot itself but above map */
+  z-index: 1;
   transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
-  opacity: 0; /* Hidden by default */
-  pointer-events: none; /* Not interactive by default */
-  transform: translateX(-50%) translateY(10px); /* Start slightly lower */
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(10px);
 }
 
 .custom-train-div-icon:hover .train-info-card {
@@ -258,14 +248,14 @@ a:hover {
 .train-info-id {
   font-weight: 700;
   font-size: 14px;
-  color: #2980b9; /* Stronger blue for ID */
-  margin-bottom: 5px; /* Increased margin */
-  border-bottom: 1px solid #e0e0e0; /* Separator line */
-  padding-bottom: 4px; /* Padding for separator */
+  color: #2980b9;
+  margin-bottom: 5px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 4px;
 }
 
 .train-info-route {
-  margin-bottom: 5px; /* Increased margin */
+  margin-bottom: 5px;
   display: flex;
   align-items: center;
 }
@@ -274,26 +264,25 @@ a:hover {
   font-weight: 500;
 }
 .train-info-route .route-arrow {
-  margin: 0 6px; /* Increased margin */
+  margin: 0 6px;
   color: #7f8c8d;
-  font-weight: 600; /* Bolder arrow */
+  font-weight: 600;
 }
 
 .train-info-time {
   font-size: 11px;
   color: #34495e;
-  margin-bottom: 3px; /* Increased margin */
+  margin-bottom: 3px;
 }
 
 .train-info-relasi {
   font-size: 10px;
   color: #7f8c8d;
   font-style: italic;
-  margin-top: 3px; /* Added margin top */
+  margin-top: 3px;
 }
 
-
-/* Old styles (kept for reference or if needed elsewhere, but should be mostly superseded) */
+/* Legacy Station Marker Styles (optional) */
 .custom-station-icon {
   text-align: center;
 }
@@ -310,14 +299,12 @@ a:hover {
   max-width: 80px;
 }
 
-/* Active Station */
 .station-marker.active-station {
   background: #ff5722;
   transform: translateY(-50%) scale(1.1);
   z-index: 1000;
 }
 
-/* Next Station */
 .station-marker.next-station {
   background: #4caf50;
 }
@@ -342,7 +329,7 @@ a:hover {
   color: #666;
 }
 
-.train-label { /* This class was already there, kept for compatibility if used elsewhere */
+.train-label {
   animation: fadeIn 0.3s ease-out;
 }
 
