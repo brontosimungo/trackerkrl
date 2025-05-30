@@ -98,11 +98,11 @@ export default function Map({ positions }) {
             <div class="train-icon-pulse"></div>
           </div>
           <div class="train-info-card">
-            <div class="train-info-id">KA ${kaId}</div>
+            <div class="train-info-id">${kaId}</div>
             <div class="train-info-route">
-              <span class="station-from">${currentStation || 'Mulai'}</span>
+              <span class="station-from">${currentStation || 'Berangkat'}</span>
               <span class="route-arrow">→</span>
-              <span class="station-to">${nextStation || 'Selesai'}</span>
+              <span class="station-to">${nextStation || 'Tiba'}</span>
             </div>
             ${departureTime ? `<div class="train-info-time">Berangkat: ${departureTime}</div>` : ''}
             ${relasiDetail ? `<div class="train-info-relasi">${relasiDetail}</div>` : ''}
