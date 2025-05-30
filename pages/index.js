@@ -38,7 +38,7 @@ export default function Home() {
         <meta name="description" content="Pantau pergerakan real-time (simulasi) Kereta Api Commuter Line Rangkasbitung - Tanah Abang berdasarkan jadwal GAPEKA terbaru." />
         <link rel="icon" href="/favicon.ico" /> {/* Tambahkan favicon jika ada */}
       </Head
-        <main className="app-container">
+      <main className="app-container">
         <header className="app-header">
           <h1>Pantau Perjalanan KA Commuter Line</h1>
           <h2>Rangkasbitung ⇌ Tanah Abang</h2>
