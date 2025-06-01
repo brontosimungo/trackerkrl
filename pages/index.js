@@ -62,7 +62,7 @@ export default function Home() {
             Keterlambatan aktual akibat gangguan operasional tidak tercermin karena ini bukan pelacakan GPS langsung.
           </p>
           <p>
-            Dikembangkan dengan ❤️ oleh GAPEKA Explorer Team.
+            Dikembangkan dengan ❤️ oleh Aufal Marom.
           </p>
         </footer>
       </main>
