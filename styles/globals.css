@@ -168,174 +168,102 @@ a:hover {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
+  /* Allow label to be clickable if needed, but primarily for visibility */
+  pointer-events: none; /* Parent is non-interactive, children can override */
 }
 
-.train-marker-container {
+.custom-train-div-icon .train-marker-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
 }
 
-.train-icon-base {
+.custom-train-div-icon .train-icon-base {
   width: 24px;
   height: 24px;
-  background-color: #3498db;
+  background-color: #3498db; /* Blue */
+  /* background-color: #e74c3c; /* Red example */
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
   border: 2px solid white;
   position: relative;
   z-index: 2;
+  transition: transform 0.2s linear; /* Smooth rotation */
+  color: white; /* For SVG fill */
 }
 
-.train-icon-pulse {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background-color: #3498db;
-  animation: pulse-animation 2s infinite;
-  opacity: 0.7;
+.custom-train-div-icon .train-arrow-icon {
+  width: 18px; /* Adjust size as needed */
+  height: 18px; /* Adjust size as needed */
 }
 
-@keyframes pulse-animation {
-  0% {
-    transform: scale(0.8);
-    opacity: 0.7;
-  }
-  50% {
-    transform: scale(1.2);
-    opacity: 0.3;
-  }
-  100% {
-    transform: scale(0.8);
-    opacity: 0.7;
-  }
-}
 
-.train-info-card {
+/* No more pulse animation for simplicity */
+/* .train-icon-pulse { ... } */
+
+.custom-train-div-icon .train-info-card {
   position: absolute;
-  bottom: 30px;
+  bottom: 30px; /* Position above the icon */
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%); /* Center horizontally */
   min-width: 180px;
-  background-color: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
   border: 1px solid rgba(0,0,0,0.1);
   border-radius: 8px;
-  padding: 10px 14px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-  font-size: 12px;
+  padding: 8px 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-size: 11px;
   color: #2c3e50;
   text-align: left;
   white-space: nowrap;
   z-index: 1;
-  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateX(-50%) translateY(10px);
+  opacity: 1; /* Always visible */
+  pointer-events: auto; /* Label itself can be interacted with if needed */
+  /* Removed transition for opacity/transform, as it's always visible */
 }
 
-.custom-train-div-icon:hover .train-info-card {
-  opacity: 1;
-  pointer-events: auto;
-  transform: translateX(-50%) translateY(0);
-}
 
-.train-info-id {
+.custom-train-div-icon .train-info-id {
   font-weight: 700;
-  font-size: 14px;
+  font-size: 13px;
   color: #2980b9;
-  margin-bottom: 5px;
-  border-bottom: 1px solid #e0e0e0;
-  padding-bottom: 4px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 3px;
 }
 
-.train-info-route {
-  margin-bottom: 5px;
+.custom-train-div-icon .train-info-route {
+  margin-bottom: 4px;
   display: flex;
   align-items: center;
 }
-.train-info-route .station-from,
-.train-info-route .station-to {
+.custom-train-div-icon .train-info-route .station-from,
+.custom-train-div-icon .train-info-route .station-to {
   font-weight: 500;
 }
-.train-info-route .route-arrow {
-  margin: 0 6px;
+.custom-train-div-icon .train-info-route .route-arrow {
+  margin: 0 5px;
   color: #7f8c8d;
   font-weight: 600;
 }
 
-.train-info-time {
-  font-size: 11px;
+.custom-train-div-icon .train-info-time {
+  font-size: 10px;
   color: #34495e;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
 
-.train-info-relasi {
-  font-size: 10px;
+.custom-train-div-icon .train-info-relasi {
+  font-size: 9px;
   color: #7f8c8d;
   font-style: italic;
-  margin-top: 3px;
-}
-
-/* Legacy Station Marker Styles (optional) */
-.custom-station-icon {
-  text-align: center;
-}
-
-.station-marker .station-code {
-  font-weight: bold;
-  font-size: 11px;
-}
-
-.station-marker .station-name {
-  font-size: 10px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 80px;
-}
-
-.station-marker.active-station {
-  background: #ff5722;
-  transform: translateY(-50%) scale(1.1);
-  z-index: 1000;
-}
-
-.station-marker.next-station {
-  background: #4caf50;
-}
-
-/* Station Popup */
-.station-popup {
-  min-width: 180px;
-}
-
-.station-popup h4 {
-  margin: 0 0 5px 0;
-  color: #0056b3;
-}
-
-.station-popup p {
-  margin: 3px 0;
-  font-size: 13px;
-}
-
-.station-popup .station-note {
-  font-style: italic;
-  color: #666;
-}
-
-.train-label {
-  animation: fadeIn 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(2px); }
-  to { opacity: 1; transform: translateY(0); }
+  margin-top: 2px;
 }
 
 /* Responsive adjustments */
@@ -352,13 +280,13 @@ a:hover {
   .app-footer {
     font-size: 0.75rem;
   }
-  .train-info-card {
+  .custom-train-div-icon .train-info-card {
     min-width: 150px;
-    font-size: 11px;
-    padding: 8px 10px;
+    font-size: 10px;
+    padding: 6px 8px;
   }
-  .train-info-id {
-    font-size: 13px;
+  .custom-train-div-icon .train-info-id {
+    font-size: 12px;
   }
   .station-tooltip-label.leaflet-tooltip {
     font-size: 10px !important;
