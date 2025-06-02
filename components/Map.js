@@ -9,7 +9,7 @@ function getDistance([lat1, lng1], [lat2, lng2]) {
   return Math.sqrt((lat1 - lat2) ** 2 + (lng1 - lng2) ** 2);
 }
 
-// Fungsi cari titik terdekat dari polyline
+// Cari titik polyline terdekat
 function findNearestPoint(pos, polylines) {
   let nearest = null;
   let minDist = Infinity;
@@ -27,6 +27,15 @@ function findNearestPoint(pos, polylines) {
   return nearest;
 }
 
+// Triangle icon generator
+const createTriangleTrainIcon = (rotationDeg = 0) =>
+  L.divIcon({
+    className: 'custom-train-icon',
+    html: `<div class="triangle-icon" style="transform: rotate(${rotationDeg}deg);"></div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12]
+  });
+
 export default function Map({ positions }) {
   const [jalur, setJalur] = useState(null);
   const [stasiun, setStasiun] = useState([]);
@@ -36,12 +45,7 @@ export default function Map({ positions }) {
   useEffect(() => {
     setIsLoadingJalur(true);
     fetch('/data/jalurRel.json')
-      .then(res => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      })
+      .then(res => res.json())
       .then(dataJalur => {
         const filtered = {
           ...dataJalur,
@@ -50,8 +54,8 @@ export default function Map({ positions }) {
         setJalur(filtered);
         setIsLoadingJalur(false);
       })
-      .catch(error => {
-        console.error("Gagal memuat data jalurRel:", error);
+      .catch(err => {
+        console.error("Gagal memuat jalur:", err);
         setIsLoadingJalur(false);
       });
   }, []);
@@ -59,18 +63,13 @@ export default function Map({ positions }) {
   useEffect(() => {
     setIsLoadingStations(true);
     fetch('/data/stasiun.json')
-      .then(res => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then(dataStasiun => {
-        setStasiun(dataStasiun);
+      .then(res => res.json())
+      .then(data => {
+        setStasiun(data);
         setIsLoadingStations(false);
       })
-      .catch(error => {
-        console.error("Gagal memuat data stasiun:", error);
+      .catch(err => {
+        console.error("Gagal memuat stasiun:", err);
         setIsLoadingStations(false);
       });
   }, []);
@@ -82,51 +81,31 @@ export default function Map({ positions }) {
     iconAnchor: [6, 6]
   });
 
-  const createTrainIcon = (kaId, currentStation, nextStation, departureTime, relasiDetail) => {
-    return L.divIcon({
-      className: 'custom-train-div-icon',
-      html: `
-        <div class="train-marker-container">
-          <div class="train-icon-base">
-            <div class="train-icon-pulse"></div>
-          </div>
-          <div class="train-info-card">
-            <div class="train-info-id">${kaId}</div>
-            <div class="train-info-route">
-              <span class="station-from">${currentStation || 'Berangkat'}</span>
-              <span class="route-arrow">→</span>
-              <span class="station-to">${nextStation || 'Tiba'}</span>
-            </div>
-            ${departureTime ? `<div class="train-info-time">Berangkat: ${departureTime}</div>` : ''}
-            ${relasiDetail ? `<div class="train-info-relasi">${relasiDetail}</div>` : ''}
-          </div>
-        </div>
-      `,
-      iconAnchor: [12, 12]
-    });
-  };
+  const bounds = [
+    [-6.45, 106.10], // SouthWest
+    [-6.10, 106.90], // NorthEast
+  ];
 
   return (
     <MapContainer
-      center={[-6.30, 106.55]}
-      zoom={10}
+      center={[-6.3, 106.55]}
+      zoom={11}
+      minZoom={10}
+      maxBounds={bounds}
+      maxBoundsViscosity={1.0}
       style={{ height: 'calc(100vh - 100px)', width: '100%' }}
       scrollWheelZoom={true}
     >
-      {/* Layer peta bawah yang blur */}
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; OpenStreetMap contributors'
         className="blur-tile-layer"
       />
-
-      {/* Layer label tajam di atas */}
       <TileLayer
         url="https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png"
         attribution='&copy; OpenStreetMap, Carto'
       />
 
-      {/* Garis jalur rel */}
       {!isLoadingJalur && jalur && jalur.features.map((feature, i) => (
         <Polyline
           key={`jalur-${i}`}
@@ -137,56 +116,48 @@ export default function Map({ positions }) {
         />
       ))}
 
-      {/* Marker stasiun */}
-      {!isLoadingStations && stasiun.map((s, i) => {
-        if (!s.koordinat || s.koordinat.length !== 2 || typeof s.koordinat[0] !== 'number' || typeof s.koordinat[1] !== 'number') {
-          console.warn("Koordinat stasiun tidak valid:", s);
-          return null;
-        }
-        return (
-          <Marker
-            key={`s-${i}`}
-            position={[s.koordinat[1], s.koordinat[0]]}
-            icon={stationDotIcon}
-            zIndexOffset={100}
+      {!isLoadingStations && stasiun.map((s, i) => (
+        <Marker
+          key={`s-${i}`}
+          position={[s.koordinat[1], s.koordinat[0]]}
+          icon={stationDotIcon}
+          zIndexOffset={100}
+        >
+          <Tooltip
+            direction="top"
+            offset={[0, -7]}
+            opacity={1}
+            permanent
+            className="station-tooltip-label"
           >
-            <Tooltip
-              direction="top"
-              offset={[0, -7]}
-              opacity={1}
-              permanent
-              className="station-tooltip-label"
-            >
-              {s.nama}
-            </Tooltip>
-          </Marker>
-        );
-      })}
+            {s.nama}
+          </Tooltip>
+        </Marker>
+      ))}
 
-      {/* Marker kereta */}
       {!isLoadingJalur && positions && jalur && Object.entries(positions).map(([kaId, pos]) => {
         const koord = pos.koordinat;
         if (!Array.isArray(koord) || koord.length !== 2) return null;
-        if (!jalur.features || jalur.features.length === 0) return null;
-
         const nearest = findNearestPoint(koord, jalur.features);
         if (!nearest) return null;
-
+        const heading = pos.heading || 0; // derajat arah
         const relasiDetail = relasiKA[kaId]?.[0] || '';
 
         return (
           <Marker
             key={kaId}
             position={nearest}
-            icon={createTrainIcon(
-              kaId,
-              pos.currentStop?.stasiun,
-              pos.nextStop?.stasiun,
-              pos.departureTime,
-              relasiDetail
-            )}
+            icon={createTriangleTrainIcon(heading)}
             zIndexOffset={1000}
-          />
+          >
+            <Tooltip direction="top" offset={[0, -8]} opacity={1}>
+              <div className="train-tooltip">
+                <strong>{kaId}</strong><br />
+                {pos.currentStop?.stasiun} → {pos.nextStop?.stasiun}<br />
+                {relasiDetail}
+              </div>
+            </Tooltip>
+          </Marker>
         );
       })}
     </MapContainer>
