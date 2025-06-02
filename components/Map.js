@@ -1,10 +1,10 @@
 import { MapContainer, TileLayer, Marker, Polyline, Tooltip } from 'react-leaflet';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import relasiKA from '../data/relasiKA';
 
-// Fungsi hitung jarak Euclidean
+// Fungsi hitung jarak Euclidean (digunakan oleh findNearestPoint)
 function getDistance([lat1, lng1], [lat2, lng2]) {
   return Math.sqrt((lat1 - lat2) ** 2 + (lng1 - lng2) ** 2);
 }
@@ -16,7 +16,7 @@ function findNearestPoint(pos, polylines) {
 
   polylines.forEach(poly => {
     poly.geometry.coordinates.forEach(([lng, lat]) => {
-      const dist = getDistance([pos[1], pos[0]], [lat, lng]);
+      const dist = getDistance([pos[1], pos[0]], [lat, lng]); // pos is [lng, lat], so pos[1] is lat, pos[0] is lng
       if (dist < minDist) {
         minDist = dist;
         nearest = [lat, lng];
@@ -26,6 +26,25 @@ function findNearestPoint(pos, polylines) {
 
   return nearest;
 }
+
+// Fungsi untuk menghitung bearing (sudut arah)
+function calculateBearing(lat1, lng1, lat2, lng2) {
+  const toRadians = (degrees) => degrees * Math.PI / 180;
+  const toDegrees = (radians) => radians * 180 / Math.PI;
+
+  const φ1 = toRadians(lat1);
+  const φ2 = toRadians(lat2);
+  const λ1 = toRadians(lng1);
+  const λ2 = toRadians(lng2);
+
+  const y = Math.sin(λ2 - λ1) * Math.cos(φ2);
+  const x = Math.cos(φ1) * Math.sin(φ2) -
+            Math.sin(φ1) * Math.cos(φ2) * Math.cos(λ2 - λ1);
+  const θ = Math.atan2(y, x);
+  const brng = (toDegrees(θ) + 360) % 360; // Arah dalam derajat
+  return brng;
+}
+
 
 export default function Map({ positions }) {
   const [jalur, setJalur] = useState(null);
@@ -75,34 +94,36 @@ export default function Map({ positions }) {
       });
   }, []);
 
-  const stationDotIcon = L.divIcon({
+  const stationDotIcon = useMemo(() => L.divIcon({
     className: 'station-dot-icon',
     html: `<span class="station-marker-dot-only"></span>`,
     iconSize: [12, 12],
     iconAnchor: [6, 6]
-  });
+  }), []);
 
-  const createTrainIcon = (kaId, currentStation, nextStation, departureTime, relasiDetail) => {
+  const createTrainIcon = (kaId, currentStationName, nextStationName, departureTime, relasiDetail, bearing) => {
     return L.divIcon({
-      className: 'custom-train-div-icon',
+      className: 'custom-train-div-icon', // Class ini akan menampung style untuk label selalu tampil
       html: `
         <div class="train-marker-container">
-          <div class="train-icon-base">
-            <div class="train-icon-pulse"></div>
+          <div class="train-icon-base" style="transform: rotate(${bearing || 0}deg);">
+            <svg class="train-arrow-icon" viewBox="0 0 24 24" fill="currentColor" width="18px" height="18px">
+              <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z"/>
+            </svg>
           </div>
           <div class="train-info-card">
             <div class="train-info-id">${kaId}</div>
             <div class="train-info-route">
-              <span class="station-from">${currentStation || 'Berangkat'}</span>
+              <span class="station-from">${currentStationName || 'Berangkat'}</span>
               <span class="route-arrow">→</span>
-              <span class="station-to">${nextStation || 'Tiba'}</span>
+              <span class="station-to">${nextStationName || 'Tiba'}</span>
             </div>
             ${departureTime ? `<div class="train-info-time">Berangkat: ${departureTime}</div>` : ''}
             ${relasiDetail ? `<div class="train-info-relasi">${relasiDetail}</div>` : ''}
           </div>
         </div>
       `,
-      iconAnchor: [12, 12]
+      iconAnchor: [12, 12] // Anchor di tengah base icon
     });
   };
 
@@ -113,20 +134,16 @@ export default function Map({ positions }) {
       style={{ height: 'calc(100vh - 100px)', width: '100%' }}
       scrollWheelZoom={true}
     >
-      {/* Layer peta bawah yang blur */}
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; OpenStreetMap contributors'
+        attribution='© OpenStreetMap contributors'
         className="blur-tile-layer"
       />
-
-      {/* Layer label tajam di atas */}
       <TileLayer
         url="https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png"
-        attribution='&copy; OpenStreetMap, Carto'
+        attribution='© OpenStreetMap, Carto'
       />
 
-      {/* Garis jalur rel */}
       {!isLoadingJalur && jalur && jalur.features.map((feature, i) => (
         <Polyline
           key={`jalur-${i}`}
@@ -137,7 +154,6 @@ export default function Map({ positions }) {
         />
       ))}
 
-      {/* Marker stasiun */}
       {!isLoadingStations && stasiun.map((s, i) => {
         if (!s.koordinat || s.koordinat.length !== 2 || typeof s.koordinat[0] !== 'number' || typeof s.koordinat[1] !== 'number') {
           console.warn("Koordinat stasiun tidak valid:", s);
@@ -163,27 +179,42 @@ export default function Map({ positions }) {
         );
       })}
 
-      {/* Marker kereta */}
-      {!isLoadingJalur && positions && jalur && Object.entries(positions).map(([kaId, pos]) => {
-        const koord = pos.koordinat;
+      {!isLoadingJalur && positions && jalur && Object.entries(positions).map(([kaId, posData]) => {
+        const koord = posData.koordinat; // koord is [lng, lat]
         if (!Array.isArray(koord) || koord.length !== 2) return null;
         if (!jalur.features || jalur.features.length === 0) return null;
 
-        const nearest = findNearestPoint(koord, jalur.features);
-        if (!nearest) return null;
+        const nearestOnTrack = findNearestPoint(koord, jalur.features); // nearestOnTrack is [lat, lng]
+        if (!nearestOnTrack) return null;
+        
+        let bearing = 0;
+        if (posData.currentStop && posData.nextStop) {
+            // currentStop.koordinat and nextStop.koordinat are [lng, lat]
+            bearing = calculateBearing(
+                posData.currentStop.koordinat[1], posData.currentStop.koordinat[0],
+                posData.nextStop.koordinat[1], posData.nextStop.koordinat[0]
+            );
+        } else if (posData.prevStopForBearing && posData.currentStop) { // If at station, use previous to current
+             bearing = calculateBearing(
+                posData.prevStopForBearing.koordinat[1], posData.prevStopForBearing.koordinat[0],
+                posData.currentStop.koordinat[1], posData.currentStop.koordinat[0]
+            );
+        }
+
 
         const relasiDetail = relasiKA[kaId]?.[0] || '';
 
         return (
           <Marker
             key={kaId}
-            position={nearest}
+            position={nearestOnTrack} // Use the snapped position for the marker
             icon={createTrainIcon(
               kaId,
-              pos.currentStop?.stasiun,
-              pos.nextStop?.stasiun,
-              pos.departureTime,
-              relasiDetail
+              posData.currentStop?.stasiun,
+              posData.nextStop?.stasiun,
+              posData.departureTime,
+              relasiDetail,
+              bearing
             )}
             zIndexOffset={1000}
           />
@@ -191,4 +222,4 @@ export default function Map({ positions }) {
       })}
     </MapContainer>
   );
-      }
+}
