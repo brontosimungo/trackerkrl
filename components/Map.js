@@ -9,32 +9,31 @@ function getDistance([lat1, lng1], [lat2, lng2]) {
   return Math.sqrt((lat1 - lat2) ** 2 + (lng1 - lng2) ** 2);
 }
 
-// Cari titik polyline terdekat
-function findNearestPoint(pos, polylines) {
+// Fungsi cari titik terdekat dan arah dari polyline
+function findNearestPointAndAngle(pos, polylines) {
   let nearest = null;
   let minDist = Infinity;
+  let angle = 0;
 
   polylines.forEach(poly => {
-    poly.geometry.coordinates.forEach(([lng, lat]) => {
-      const dist = getDistance([pos[1], pos[0]], [lat, lng]);
+    const coords = poly.geometry.coordinates;
+    for (let i = 0; i < coords.length - 1; i++) {
+      const [lng1, lat1] = coords[i];
+      const [lng2, lat2] = coords[i + 1];
+      const midLat = (lat1 + lat2) / 2;
+      const midLng = (lng1 + lng2) / 2;
+      const dist = getDistance([pos[1], pos[0]], [midLat, midLng]);
+
       if (dist < minDist) {
         minDist = dist;
-        nearest = [lat, lng];
+        nearest = [midLat, midLng];
+        angle = Math.atan2(lat2 - lat1, lng2 - lng1) * (180 / Math.PI);
       }
-    });
+    }
   });
 
-  return nearest;
+  return { point: nearest, angle };
 }
-
-// Triangle icon generator
-const createTriangleTrainIcon = (rotationDeg = 0) =>
-  L.divIcon({
-    className: 'custom-train-icon',
-    html: `<div class="triangle-icon" style="transform: rotate(${rotationDeg}deg);"></div>`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12]
-  });
 
 export default function Map({ positions }) {
   const [jalur, setJalur] = useState(null);
@@ -43,7 +42,6 @@ export default function Map({ positions }) {
   const [isLoadingJalur, setIsLoadingJalur] = useState(true);
 
   useEffect(() => {
-    setIsLoadingJalur(true);
     fetch('/data/jalurRel.json')
       .then(res => res.json())
       .then(dataJalur => {
@@ -53,23 +51,14 @@ export default function Map({ positions }) {
         };
         setJalur(filtered);
         setIsLoadingJalur(false);
-      })
-      .catch(err => {
-        console.error("Gagal memuat jalur:", err);
-        setIsLoadingJalur(false);
       });
   }, []);
 
   useEffect(() => {
-    setIsLoadingStations(true);
     fetch('/data/stasiun.json')
       .then(res => res.json())
-      .then(data => {
-        setStasiun(data);
-        setIsLoadingStations(false);
-      })
-      .catch(err => {
-        console.error("Gagal memuat stasiun:", err);
+      .then(dataStasiun => {
+        setStasiun(dataStasiun);
         setIsLoadingStations(false);
       });
   }, []);
@@ -81,18 +70,19 @@ export default function Map({ positions }) {
     iconAnchor: [6, 6]
   });
 
-  const bounds = [
-    [-6.45, 106.10], // SouthWest
-    [-6.10, 106.90], // NorthEast
-  ];
+  const createTriangleIcon = (angle) => {
+    return L.divIcon({
+      className: 'custom-train-div-icon',
+      html: `<div class="train-triangle" style="transform: rotate(${angle}deg);"></div>`
+    });
+  };
 
   return (
     <MapContainer
       center={[-6.3, 106.55]}
-      zoom={11}
+      zoom={10}
       minZoom={10}
-      maxBounds={bounds}
-      maxBoundsViscosity={1.0}
+      maxBounds={[[-6.7, 106.0], [-5.9, 107.0]]}
       style={{ height: 'calc(100vh - 100px)', width: '100%' }}
       scrollWheelZoom={true}
     >
@@ -101,12 +91,13 @@ export default function Map({ positions }) {
         attribution='&copy; OpenStreetMap contributors'
         className="blur-tile-layer"
       />
+
       <TileLayer
         url="https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png"
         attribution='&copy; OpenStreetMap, Carto'
       />
 
-      {!isLoadingJalur && jalur && jalur.features.map((feature, i) => (
+      {!isLoadingJalur && jalur.features.map((feature, i) => (
         <Polyline
           key={`jalur-${i}`}
           positions={feature.geometry.coordinates.map(([lng, lat]) => [lat, lng])}
@@ -117,47 +108,40 @@ export default function Map({ positions }) {
       ))}
 
       {!isLoadingStations && stasiun.map((s, i) => (
-        <Marker
-          key={`s-${i}`}
-          position={[s.koordinat[1], s.koordinat[0]]}
-          icon={stationDotIcon}
-          zIndexOffset={100}
-        >
-          <Tooltip
-            direction="top"
-            offset={[0, -7]}
-            opacity={1}
-            permanent
-            className="station-tooltip-label"
+        s.koordinat && (
+          <Marker
+            key={`s-${i}`}
+            position={[s.koordinat[1], s.koordinat[0]]}
+            icon={stationDotIcon}
+            zIndexOffset={100}
           >
-            {s.nama}
-          </Tooltip>
-        </Marker>
+            <Tooltip
+              direction="top"
+              offset={[0, -7]}
+              opacity={1}
+              permanent
+              className="station-tooltip-label"
+            >
+              {s.nama}
+            </Tooltip>
+          </Marker>
+        )
       ))}
 
-      {!isLoadingJalur && positions && jalur && Object.entries(positions).map(([kaId, pos]) => {
+      {!isLoadingJalur && positions && Object.entries(positions).map(([kaId, pos]) => {
         const koord = pos.koordinat;
-        if (!Array.isArray(koord) || koord.length !== 2) return null;
-        const nearest = findNearestPoint(koord, jalur.features);
-        if (!nearest) return null;
-        const heading = pos.heading || 0; // derajat arah
-        const relasiDetail = relasiKA[kaId]?.[0] || '';
+        if (!koord || koord.length !== 2) return null;
+
+        const { point, angle } = findNearestPointAndAngle(koord, jalur.features);
+        if (!point) return null;
 
         return (
           <Marker
             key={kaId}
-            position={nearest}
-            icon={createTriangleTrainIcon(heading)}
+            position={point}
+            icon={createTriangleIcon(angle)}
             zIndexOffset={1000}
-          >
-            <Tooltip direction="top" offset={[0, -8]} opacity={1}>
-              <div className="train-tooltip">
-                <strong>{kaId}</strong><br />
-                {pos.currentStop?.stasiun} → {pos.nextStop?.stasiun}<br />
-                {relasiDetail}
-              </div>
-            </Tooltip>
-          </Marker>
+          />
         );
       })}
     </MapContainer>
