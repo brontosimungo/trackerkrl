@@ -16,7 +16,7 @@ function findNearestPoint(pos, polylines) {
 
   polylines.forEach(poly => {
     poly.geometry.coordinates.forEach(([lng, lat]) => {
-      const dist = getDistance([pos[1], pos[0]], [lat, lng]); // pos is [lng, lat], so pos[1] is lat, pos[0] is lng
+      const dist = getDistance([pos[1], pos[0]], [lat, lng]);
       if (dist < minDist) {
         minDist = dist;
         nearest = [lat, lng];
@@ -41,10 +41,9 @@ function calculateBearing(lat1, lng1, lat2, lng2) {
   const x = Math.cos(φ1) * Math.sin(φ2) -
             Math.sin(φ1) * Math.cos(φ2) * Math.cos(λ2 - λ1);
   const θ = Math.atan2(y, x);
-  const brng = (toDegrees(θ) + 360) % 360; // Arah dalam derajat
+  const brng = (toDegrees(θ) + 360) % 360;
   return brng;
 }
-
 
 export default function Map({ positions }) {
   const [jalur, setJalur] = useState(null);
@@ -55,12 +54,7 @@ export default function Map({ positions }) {
   useEffect(() => {
     setIsLoadingJalur(true);
     fetch('/data/jalurRel.json')
-      .then(res => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      })
+      .then(res => res.json())
       .then(dataJalur => {
         const filtered = {
           ...dataJalur,
@@ -78,12 +72,7 @@ export default function Map({ positions }) {
   useEffect(() => {
     setIsLoadingStations(true);
     fetch('/data/stasiun.json')
-      .then(res => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      })
+      .then(res => res.json())
       .then(dataStasiun => {
         setStasiun(dataStasiun);
         setIsLoadingStations(false);
@@ -100,32 +89,6 @@ export default function Map({ positions }) {
     iconSize: [12, 12],
     iconAnchor: [6, 6]
   }), []);
-
-  const createTrainIcon = (kaId, currentStationName, nextStationName, departureTime, relasiDetail, bearing) => {
-    return L.divIcon({
-      className: 'custom-train-div-icon', // Class ini akan menampung style untuk label selalu tampil
-      html: `
-        <div class="train-marker-container">
-          <div class="train-icon-base" style="transform: rotate(${bearing || 0}deg);">
-            <svg class="train-arrow-icon" viewBox="0 0 24 24" fill="currentColor" width="18px" height="18px">
-              <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z"/>
-            </svg>
-          </div>
-          <div class="train-info-card">
-            <div class="train-info-id">${kaId}</div>
-            <div class="train-info-route">
-              <span class="station-from">${currentStationName || 'Berangkat'}</span>
-              <span class="route-arrow">→</span>
-              <span class="station-to">${nextStationName || 'Tiba'}</span>
-            </div>
-            ${departureTime ? `<div class="train-info-time">Berangkat: ${departureTime}</div>` : ''}
-            ${relasiDetail ? `<div class="train-info-relasi">${relasiDetail}</div>` : ''}
-          </div>
-        </div>
-      `,
-      iconAnchor: [12, 12] // Anchor di tengah base icon
-    });
-  };
 
   return (
     <MapContainer
@@ -155,10 +118,7 @@ export default function Map({ positions }) {
       ))}
 
       {!isLoadingStations && stasiun.map((s, i) => {
-        if (!s.koordinat || s.koordinat.length !== 2 || typeof s.koordinat[0] !== 'number' || typeof s.koordinat[1] !== 'number') {
-          console.warn("Koordinat stasiun tidak valid:", s);
-          return null;
-        }
+        if (!s.koordinat || s.koordinat.length !== 2) return null;
         return (
           <Marker
             key={`s-${i}`}
@@ -170,54 +130,12 @@ export default function Map({ positions }) {
               direction="top"
               offset={[0, -7]}
               opacity={1}
-              permanent
+              sticky
               className="station-tooltip-label"
             >
               {s.nama}
             </Tooltip>
           </Marker>
-        );
-      })}
-
-      {!isLoadingJalur && positions && jalur && Object.entries(positions).map(([kaId, posData]) => {
-        const koord = posData.koordinat; // koord is [lng, lat]
-        if (!Array.isArray(koord) || koord.length !== 2) return null;
-        if (!jalur.features || jalur.features.length === 0) return null;
-
-        const nearestOnTrack = findNearestPoint(koord, jalur.features); // nearestOnTrack is [lat, lng]
-        if (!nearestOnTrack) return null;
-        
-        let bearing = 0;
-        if (posData.currentStop && posData.nextStop) {
-            // currentStop.koordinat and nextStop.koordinat are [lng, lat]
-            bearing = calculateBearing(
-                posData.currentStop.koordinat[1], posData.currentStop.koordinat[0],
-                posData.nextStop.koordinat[1], posData.nextStop.koordinat[0]
-            );
-        } else if (posData.prevStopForBearing && posData.currentStop) { // If at station, use previous to current
-             bearing = calculateBearing(
-                posData.prevStopForBearing.koordinat[1], posData.prevStopForBearing.koordinat[0],
-                posData.currentStop.koordinat[1], posData.currentStop.koordinat[0]
-            );
-        }
-
-
-        const relasiDetail = relasiKA[kaId]?.[0] || '';
-
-        return (
-          <Marker
-            key={kaId}
-            position={nearestOnTrack} // Use the snapped position for the marker
-            icon={createTrainIcon(
-              kaId,
-              posData.currentStop?.stasiun,
-              posData.nextStop?.stasiun,
-              posData.departureTime,
-              relasiDetail,
-              bearing
-            )}
-            zIndexOffset={1000}
-          />
         );
       })}
     </MapContainer>
